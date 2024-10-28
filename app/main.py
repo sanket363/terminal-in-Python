@@ -37,6 +37,10 @@ def clear_command(args):
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def pwd_command(args):
+    """Print the current working directory."""
+    print(os.getcwd())  # Print the full absolute path of the current directory
+
+def pwd_command(args):
     print(os.getcwd())  # Print working directory
 
 def type_builtin(args):
@@ -52,14 +56,30 @@ def type_builtin(args):
             return
     print(f"{command}: not found")
 
+# def cd_command(args):
+#     if not args:
+#         print("cd: missing operand")
+#         return
+#     try:
+#         os.chdir(args[0])
+#     except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+#         print(f"cd: {args[0]}: {str(e)}")
+
 def cd_command(args):
+    # If no arguments are given, change to the home directory
     if not args:
-        print("cd: missing operand")
-        return
+        target_directory = os.environ.get('HOME', os.path.expanduser("~"))  # Use HOME or fallback to default
+    else:
+        target_directory = args[0]
+
+        # Check if the target directory is '~'
+        if target_directory == '~':
+            target_directory = os.environ.get('HOME', os.path.expanduser("~"))  # Use HOME or fallback to default
+
     try:
-        os.chdir(args[0])
+        os.chdir(target_directory)
     except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
-        print(f"cd: {args[0]}: {str(e)}")
+        print(f"cd: {target_directory}: {str(e)}")
 
 def get_owner_group_windows(file_path):
     """Get the owner and group of a file on Windows."""
@@ -209,9 +229,23 @@ def history_command(args):
         for line in f:
             print(line.strip())
 
+def time_command(command):
+    start_time = time.time()
+    subprocess.run(command)
+    duration = time.time() - start_time
+    print(f"Command executed in {duration:.2f} seconds")
+
+def file_completer(text, state):
+    options = [f for f in os.listdir('.') if f.startswith(text)]
+    return options[state] if state < len(options) else None
+
+readline.set_completer(file_completer)
+readline.parse_and_bind("tab: complete")
+
 # Add built-in commands to dictionary
 builtins.update({
     'echo': echo_command,
+    'pwd': pwd_command,
     'exit': lambda args: sys.exit(0),
     'pwd': pwd_command,
     'type': type_builtin,
@@ -225,6 +259,7 @@ builtins.update({
     'pushd': pushd_command,
     'popd': popd_command,
     'find': find_command,
+    'time': time_command,
     'history': history_command,  # Add history command
 })
 
