@@ -1,5 +1,6 @@
 import os
 import sys
+import readline  # Use readline directly for tab completion
 
 # Define builtins dictionary
 builtins = {}
@@ -32,11 +33,53 @@ def type_builtin(args):
 
     print(f"{command}: not found")
 
+def cd_command(args):
+    if not args:
+        print("cd: missing operand")
+        return
+
+    try:
+        os.chdir(args[0])
+    except FileNotFoundError:
+        print(f"cd: {args[0]}: No such file or directory")
+    except NotADirectoryError:
+        print(f"cd: {args[0]}: Not a directory")
+    except PermissionError:
+        print(f"cd: {args[0]}: Permission denied")
+
+def ls_command(args):
+    directory = args[0] if args else '.'
+    try:
+        for item in os.listdir(directory):
+            print(item)
+    except FileNotFoundError:
+        print(f"ls: cannot access '{directory}': No such file or directory")
+    except NotADirectoryError:
+        print(f"ls: cannot access '{directory}': Not a directory")
+    except PermissionError:
+        print(f"ls: cannot access '{directory}': Permission denied")
+
+def cd_completer(text, state):
+    # Get the current directory
+    current_dir = os.getcwd()
+    # List all directories in the current directory
+    directories = [d for d in os.listdir(current_dir) if os.path.isdir(os.path.join(current_dir, d))]
+    # Filter directories based on the text entered so far
+    matches = [d for d in directories if d.startswith(text)]
+    # Return the match for the current state
+    return matches[state] if state < len(matches) else None
+
 # Add commands to builtins
 builtins['echo'] = echo_command
 builtins['exit'] = lambda args: sys.exit(0)
 builtins['type'] = type_builtin
 builtins['clear'] = lambda args: clear("clear")
+builtins['cd'] = cd_command
+builtins['ls'] = ls_command
+
+# Enable tab completion using readline
+readline.set_completer(cd_completer)
+readline.parse_and_bind("tab: complete")
 
 # Example usage
 def main():
@@ -59,3 +102,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
