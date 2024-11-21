@@ -229,9 +229,16 @@ def history_command(args):
         for line in f:
             print(line.strip())
 
-def time_command(command):
+def time_command(args):
+    if not args:
+        print("time: missing command")
+        return
+
+    command = " ".join(args)  # Join the arguments to form the command
     start_time = time.time()
-    subprocess.run(command)
+    
+    # Execute the command
+    result = subprocess.run(command, shell=True)  # Set shell=True to allow string commands
     duration = time.time() - start_time
     print(f"Command executed in {duration:.2f} seconds")
 
